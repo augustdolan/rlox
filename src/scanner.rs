@@ -27,7 +27,7 @@ impl Scanner<'_> {
     }
 
     // should abstract error to a trait
-    pub fn scan_tokens(mut self, error: Lox::error) -> Vec<token::Token> {
+    pub fn scan_tokens(mut self, error: fn(line: u32, message: String)) -> Vec<token::Token> {
         while !self.is_at_end() {
             // We are at the beginning of the next lexeme.
             self.start = self.current;

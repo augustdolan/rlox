@@ -54,7 +54,7 @@ impl Lox {
 
     fn run(&self, source: String) {
         let scanner = scanner::Scanner::new(&source);
-        let tokens = scanner.scan_tokens(self.error);
+        let tokens = scanner.scan_tokens(|line, message| self.error(line, message));
         for token in tokens {
             println!("{}", token);
         }
