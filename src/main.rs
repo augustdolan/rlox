@@ -15,7 +15,7 @@ impl Lox {
             self.run_prompt();
         }
     }
-    fn run_file(&self, path: &String) {
+    fn run_file(&mut self, path: &String) {
         let content = std::fs::read_to_string(path);
         match content {
             Ok(content) => {
@@ -52,9 +52,9 @@ impl Lox {
         self.had_error = true;
     }
 
-    fn run(&self, source: String) {
-        let scanner = scanner::Scanner::new(&source);
-        let tokens = scanner.scan_tokens(|line, message| self.error(line, message));
+    fn run(&mut self, source: String) {
+        let scanner = scanner::Scanner::new(&source, |line, message| self.error(line, message));
+        let tokens = scanner.scan_tokens();
         for token in tokens {
             println!("{}", token);
         }

@@ -1,24 +1,26 @@
+use std::iter::Peekable;
+
 use crate::token;
 use crate::token::token_type::TokenType;
-use crate::Lox;
 
-pub struct Scanner<'a> {
+pub struct Scanner<'a, F: FnMut(u32, String)> {
     source: String,
-    char_iter: std::str::Chars<'a>,
+    char_iter: Peekable<std::str::Chars<'a>>,
     char_len: u32,
     tokens: Vec<token::Token>,
     start: u32,
     current: u32,
     line: u32,
+    error_handler: F,
 }
 
-impl Scanner<'_> {
-    // NOTE: consumes lexer on use
-    pub fn new(source: &String) -> Scanner {
+impl<F: FnMut(u32, String)> Scanner<'_, F> {
+    pub fn new(source: &String, error_handler: F) -> Scanner<F> {
         return Scanner {
+            error_handler,
             source: source.to_string(),
             char_len: source.chars().count() as u32,
-            char_iter: source.chars(),
+            char_iter: source.chars().peekable(),
             tokens: Vec::new(),
             start: 0,
             current: 0,
@@ -26,8 +28,8 @@ impl Scanner<'_> {
         };
     }
 
-    // should abstract error to a trait
-    pub fn scan_tokens(mut self, error: fn(line: u32, message: String)) -> Vec<token::Token> {
+    // NOTE: consumes lexer on use
+    pub fn scan_tokens(mut self) -> Vec<token::Token> {
         while !self.is_at_end() {
             // We are at the beginning of the next lexeme.
             self.start = self.current;
@@ -44,7 +46,9 @@ impl Scanner<'_> {
     }
     fn scan_token(&mut self) {
         let c = self.advance();
+        let next = self.char_iter.peek();
         match c {
+            // Single character tokens
             Some(',') => self.add_token(TokenType::Comma),
             Some('.') => self.add_token(TokenType::Dot),
             Some('-') => self.add_token(TokenType::Minus),
@@ -55,8 +59,28 @@ impl Scanner<'_> {
             Some(')') => self.add_token(TokenType::RightParen),
             Some('{') => self.add_token(TokenType::LeftBrace),
             Some('}') => self.add_token(TokenType::RightBrace),
+
+            // operators
+            Some('!') => self.add_token(if self.match_char(next, '=') {
+                TokenType::BangEqual
+            } else {
+                TokenType::Bang
+            }),
             None => return,
-            _ => eprintln!("Unexpected character"),
+            _ => (self.error_handler)(self.line, String::from("Unexpected character")),
+        }
+    }
+
+    fn match_char(&self, next: Option<&char>, expected: char) -> bool {
+        match next {
+            Some(&c) => {
+                if c == expected {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            None => return false,
         }
     }
 
