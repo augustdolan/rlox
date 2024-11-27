@@ -1,8 +1,12 @@
 pub mod token_type;
 
 #[derive(Debug)]
-pub struct Literal {}
+pub enum Literal {
+    Number(f64),
+    None,
+}
 
+#[derive(Debug)]
 pub struct Token {
     kind: token_type::TokenType,
     lexeme: String,
@@ -12,7 +16,7 @@ pub struct Token {
 
 impl std::fmt::Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{:?} {} {:#?}", self.kind, self.lexeme, self.literal)
+        write!(f, "{:?} {} {:?}", self.kind, self.lexeme, self.literal)
     }
 }
 
